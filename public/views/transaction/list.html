@@ -1,7 +1,15 @@
 <div class="alert alert-warning" 
   data-ng-show="!txs[0].txid && !loading"
   translate>There are no transactions involving this address.</div>
-<div class="block-tx" data-ng-show="txs && txs[0].txid" data-ng-repeat="tx in txs">
+<div class="block-tx" data-ng-show="txs && txs[0].txid" data-ng-repeat="tx in txs" style="padding: 0 !important; margin: 0 !important; border: none !important;">
+  <div class="well well-sm" style="margin: 0 !important; padding: 4px 8px; white-space: normal !important; overflow: visible !important;">
+    <strong translate>Transaction</strong> 
+    <a href="tx/{{tx.txid}}" style="cursor: pointer; font-family: monospace !important; color: #333 !important; margin-left: 5px; display: inline !important; visibility: visible !important; text-decoration: none;">{{tx.txid}}</a>
+    <span class="btn-copy" clip-copy="tx.txid"></span>
+    <a href="api/detailedtx/{{tx.txid}}" target="_blank" style="margin-left: 5px; text-decoration: none;">
+      <span style="display: inline-block; width: 16px; height: 16px; background-color: #000; border-radius: 50%; text-align: center; line-height: 16px; font-size: 11px; font-weight: bold; color: #fff; cursor: pointer; vertical-align: middle;" title="View API JSON">i</span>
+    </a>
+  </div>
   <div data-ng-include src="'views/transaction/tx.html'"></div>
 </div>
 <div class="progress progress-striped active" data-ng-show="loading">

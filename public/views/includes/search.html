@@ -1,6 +1,7 @@
 <form id="search-form" data-ng-controller="SearchController" role="search" data-ng-submit="search()">
-  <div class="form-group" data-ng-class="{'has-error': badQuery}">
+  <div class="form-group" data-ng-class="{'has-error': badQuery || blockedAddress}">
     <input id="search" type="text" class="form-control" data-ng-model="q" data-ng-class="{'loading': loading}" placeholder="{{'Search for block, transaction or address'|translate}}" data-ng-submit="search()" focus="true">
     </div>
   <div class="no_matching text-danger" data-ng-show="badQuery" translate>No matching records found!</div>
+  <div class="no_matching text-danger" data-ng-show="blockedAddress">This address is blocked due to performance issues</div>
 </form>

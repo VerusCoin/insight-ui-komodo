@@ -41,18 +41,27 @@ angular.module('insight')
     };
   })
   .directive('clipCopy', function() {
-    ZeroClipboard.config({
-      moviePath: '/lib/zeroclipboard/ZeroClipboard.swf',
-      trustedDomains: ['*'],
-      allowScriptAccess: 'always',
-      forceHandCursor: true
-    });
+    // Check if ZeroClipboard is available
+    if (typeof ZeroClipboard !== 'undefined') {
+      ZeroClipboard.config({
+        moviePath: '/lib/zeroclipboard/ZeroClipboard.swf',
+        trustedDomains: ['*'],
+        allowScriptAccess: 'always',
+        forceHandCursor: true
+      });
+    }
 
     return {
       restric: 'A',
       scope: { clipCopy: '=clipCopy' },
       template: '<div class="tooltip fade right in"><div class="tooltip-arrow"></div><div class="tooltip-inner">Copied!</div></div>',
       link: function(scope, elm) {
+        // Only initialize if ZeroClipboard is available
+        if (typeof ZeroClipboard === 'undefined') {
+          elm.remove();
+          return;
+        }
+        
         var clip = new ZeroClipboard(elm);
 
         clip.on('load', function(client) {

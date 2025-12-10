@@ -1,100 +1,71 @@
 <div data-ng-include src="'views/includes/connection.html'"></div>
 <section data-ng-controller="transactionsController" data-ng-init="findThis()">
-  <div class="secondary_navbar hidden-xs hidden-sm" scroll data-ng-class="{'hidden': !secondaryNavbar}" data-ng-show="tx.txid" data-ng-init="hideSNavbar=0">
-    <div class="container" data-ng-if="!hideSNavbar">
-      <div class="col-md-6 col-lg-7 text-left">
-          <h3 translate>Transaction</h3>
-          <div class="ellipsis"> 
-            <small>{{tx.txid}}</small> 
-            <span class="btn-copy" clip-copy="tx.txid"></span>
-          </div>
-      </div>
-      <div class="col-md-6 col-lg-5 text-right">
-        <span data-ng-show="tx.confirmations" class="txvalues
-          txvalues-success">{{tx.confirmations}} 
-          <span translate>Confirmations</span>
-        </span>
-        <span data-ng-show="!tx.confirmations" 
-          class="txvalues txvalues-danger" translate>Unconfirmed Transaction!</span>
-        <span class="txvalues txvalues-primary">{{$root.currency.getConvertion(tx.valueOut)}}</span>
+  <div style="max-width: 1400px; margin: 0 auto; padding: 0;">
+    <div data-ng-if="!tx.txid">
+      <div class="progress progress-striped active">
+        <div class="progress-bar progress-bar-info" style="width: 100%">
+          <span translate>Loading Transaction Details</span> <span class="loader-gif"></span>
+        </div>
       </div>
     </div>
-    <div class="hide_snavbar">
-      <a href="#" data-ng-click="hideSNavbar=!hideSNavbar">
-        <span data-ng-show="hideSNavbar"><span class="text-muted glyphicon glyphicon-chevron-down"></span></span>
-        <span data-ng-show="!hideSNavbar"><span class="text-muted glyphicon glyphicon-chevron-up"></span></span>
-      </a>
-    </div>
-  </div>
-  <div data-ng-if="tx.txid">
-    <h1><span translate>Transaction</span> 
-      <small data-ng-show="from_vin || from_vout">
-        <span data-ng-show="from_vin" translate>Input</span> 
-        <span data-ng-show="from_vout" translate>Output</span> 
-        <span>{{v_index}}</span>
-      </small>
-    </h1>
-    <div class="progress progress-striped active" data-ng-if="!tx.txid">
-      <div class="progress-bar progress-bar-info" style="width: 100%">
-        <span translate>Loading Transaction Details</span> <span class="loader-gif"></span>
-      </div>
-    </div>
+    
     <div data-ng-if="tx.txid">
-      <div class="well well-sm ellipsis">
-        <strong translate>Transaction</strong> 
-        <span class="txid text-muted">{{tx.txid}}</span>
-              <a href="api/detailedtx/{{tx.txid}}" target="_blank" style="margin-left: 5px; text-decoration: none;">
-        <span style="display: inline-block; width: 16px; height: 16px; background-color: #000; border-radius: 50%; text-align: center; line-height: 16px; font-size: 11px; font-weight: bold; color: #fff; cursor: pointer; vertical-align: middle;" title="View API JSON">i</span>
-      </a>
-        <span class="btn-copy" clip-copy="tx.txid"></span>
+      <!-- Transaction ID -->
+      <div style="background: #fff; border: 1px solid #e7eaf3; border-radius: 4px; padding: 8px 12px; margin: 5px; font-size: 13px;">
+        <strong translate style="color: #000;">Transaction:</strong> 
+        <span style="font-family: monospace; color: #333; margin-left: 8px; font-size: 13px;">{{tx.txid}}</span>
+        <span class="btn-copy" clip-copy="tx.txid" style="margin-left: 8px;"></span>
+        <a href="api/detailedtx/{{tx.txid}}" target="_blank" style="margin-left: 8px; text-decoration: none;">
+          <span style="display: inline-block; width: 18px; height: 18px; background-color: #000; border-radius: 50%; text-align: center; line-height: 18px; font-size: 12px; font-weight: bold; color: #fff; cursor: pointer; vertical-align: middle;" title="View API JSON">i</span>
+        </a>
       </div>
-      <h2 translate>Summary</h2>
-      <table class="table" style="table-layout: fixed">
-        <tbody>
-        <tr>
-          <td><strong translate>Size</strong></td>
-          <td class="text-muted text-right">{{tx.size}} (bytes)</td>
-        </tr>
-        <tr data-ng-show="tx.fees">
-          <td><strong translate>Fee Rate</strong></td>
-          <td class="text-muted text-right">{{$root.currency.getConvertion((tx.fees * 1000) / tx.size) + ' per kB'}}</td>
-        </tr>
-        <tr>
-          <td><strong translate>Received Time</strong></td>
-          <td data-ng-show="tx.time" class="text-muted text-right">{{tx.time * 1000|date:'medium'}}</td>
-          <td data-ng-show="!tx.time" class="text-muted text-right">N/A</td>
-        </tr>
-        <tr>
-          <td><strong translate>Mined Time</strong></td>
-          <td data-ng-show="tx.blocktime" class="text-muted text-right">{{tx.blocktime * 1000|date:'medium'}}</td>
-          <td data-ng-show="!tx.blocktime" class="text-muted text-right">N/A</td>
-        </tr>
-        <tr>
-          <td><strong translate>Included in Block</strong></td>
-          <td data-ng-show="tx.blockhash" class="text-muted text-right"> 
-            <div class="ellipsis">
-              <a href="block/{{tx.blockhash}}">{{tx.blockhash}}</a>
+      <!-- Compact Header -->
+      <div style="margin: 0 5px 2px 5px;">
+        <h4 style="margin: 0 0 4px 0; font-size: 14px;"><span translate>Transaction Details</span></h4>
+        <div style="background: #f8f9fa; border: 1px solid #e7eaf3; border-radius: 4px; padding: 6px;">
+          <div style="display: flex; flex-wrap: wrap; gap: 15px; font-size: 12px;">
+            <div>
+              <span style="color: #6c757d;"><strong translate>Status:</strong></span>
+              <span data-ng-show="tx.confirmations" style="color: #28a745; margin-left: 8px;">
+                <span class="glyphicon glyphicon-ok-circle"></span> {{tx.confirmations}} <span translate>Confirmations</span>
+              </span>
+              <span data-ng-show="!tx.confirmations" style="color: #ffc107; margin-left: 8px;">
+                <span class="glyphicon glyphicon-time"></span> <span translate>Unconfirmed</span>
+              </span>
             </div>
-          <td data-ng-show="!tx.blockhash" class="text-muted text-right">Unconfirmed</td>
-        </tr>
-        <tr data-ng-show="tx.locktime">
-          <td><strong>LockTime</strong></td>
-          <td class="text-muted text-right">{{tx.locktime}}</td>
-        </tr>
-        <tr data-ng-show="tx.isCoinBase">
-          <td><strong>Coinbase</strong></td>
-          <td class="text-muted text-right">
-            <div class="ellipsis">
-                <span class="btn-copy ng-isolate-scope" clip-copy="tx.vin[0].coinbase"></span>
-                <span class="ng-binding">{{tx.vin[0].coinbase}}</span>
+            <div data-ng-show="tx.blockhash">
+              <span style="color: #6c757d;"><strong translate>Block:</strong></span>
+              <a href="block/{{tx.blockhash}}" style="margin-left: 8px;">{{tx.blockheight}}</a>
             </div>
-          </td>
-        </tr>
-        </tbody>
-      </table>
-    </div>
-    <h2 translate>Details</h2>
-    <div class="block-tx" data-ng-if="tx.txid">
+            <div data-ng-show="tx.blocktime">
+              <span style="color: #6c757d;"><strong translate>Timestamp:</strong></span>
+              <span style="margin-left: 8px;">{{tx.blocktime * 1000|date:'medium'}}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Compact Info Grid -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2px; margin-bottom: 2px;">
+        <div style="background: #fff; border: 1px solid #e7eaf3; border-radius: 4px; padding: 4px;">
+          <div style="color: #6c757d; font-size: 12px; margin-bottom: 2px;" translate>Value</div>
+          <div style="font-size: 16px; font-weight: 600;">{{$root.currency.getConvertion(tx.valueOut)}}</div>
+        </div>
+        <div style="background: #fff; border: 1px solid #e7eaf3; border-radius: 4px; padding: 8px;" data-ng-show="tx.fees">
+          <div style="color: #6c757d; font-size: 12px; margin-bottom: 4px;" translate>Transaction Fee</div>
+          <div style="font-size: 16px; font-weight: 600;">{{$root.currency.getConvertion(tx.fees)}}</div>
+        </div>
+        <div style="background: #fff; border: 1px solid #e7eaf3; border-radius: 4px; padding: 8px;">
+          <div style="color: #6c757d; font-size: 12px; margin-bottom: 4px;" translate>Size</div>
+          <div style="font-size: 16px; font-weight: 600;">{{tx.size}} bytes</div>
+        </div>
+        <div style="background: #fff; border: 1px solid #e7eaf3; border-radius: 4px; padding: 8px;" data-ng-show="tx.fees">
+          <div style="color: #6c757d; font-size: 12px; margin-bottom: 4px;" translate>Fee Rate</div>
+          <div style="font-size: 16px; font-weight: 600;">{{$root.currency.getConvertion((tx.fees * 1000) / tx.size)}} / kB</div>
+        </div>
+      </div>
+
+      <!-- Inputs/Outputs Tables -->
       <div data-ng-include src="'views/transaction/tx.html'"></div>
     </div>
   </div>
