@@ -156,6 +156,10 @@ function($scope, $rootScope, $routeParams, $location, Global, Transaction, Trans
     _findTx($routeParams.txId);
   };
 
+  // Initialize expand/collapse state for inputs and outputs
+  $scope.showAllInputs = false;
+  $scope.showAllOutputs = false;
+
   //Initial load
   $scope.load = function(from) {
     $scope.loadedBy = from;

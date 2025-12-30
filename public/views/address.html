@@ -52,6 +52,12 @@
               <td><strong translate>Identity Name</strong></td>
               <td class="ellipsis text-right">{{address.identityinfo.identity.name}}@</td>
           </tr>
+          <tr data-ng-if="address.identityinfo && address.identityinfo.identity.identityaddress">
+              <td><strong translate>IdentityID</strong></td>
+              <td class="ellipsis text-right">
+                <a href="address/{{address.identityinfo.identity.identityaddress}}">{{address.identityinfo.identity.identityaddress}}</a>
+              </td>
+          </tr>
           
           <tr data-ng-if="address.identityinfo" data-ng-repeat="IDPrimary in address.identityinfo.identity.primaryaddresses">
             <td><strong translate>Identity Primary Address</strong></td>

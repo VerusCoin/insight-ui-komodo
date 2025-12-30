@@ -1,0 +1,528 @@
+<div data-ng-include src="'views/includes/connection.html'"></div>
+<style>
+  .currency-explorer { max-width: 1400px; }
+  .help-icon { 
+    cursor: help; 
+    color: #5bc0de; 
+    margin-left: 5px; 
+    font-weight: bold;
+  }
+  .currency-header { 
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+    color: white; 
+    padding: 20px; 
+    border-radius: 4px 4px 0 0; 
+    margin: -15px -15px 20px -15px;
+  }
+  .currency-header h2 { margin: 0 0 5px 0; color: white; }
+  .currency-header .subtitle { opacity: 0.9; font-size: 14px; font-family: monospace; }
+  .option-badge { 
+    display: inline-block; 
+    padding: 4px 10px; 
+    margin: 2px; 
+    border-radius: 12px; 
+    font-size: 11px; 
+    font-weight: 600; 
+    background: #667eea; 
+    color: white; 
+  }
+  .section-header { 
+    background: #f5f5f5; 
+    padding: 10px 15px; 
+    margin: 20px -15px 15px -15px; 
+    font-weight: bold; 
+    font-size: 16px; 
+    border-left: 4px solid #667eea; 
+  }
+  .reserves-table { font-size: 13px; }
+  .reserves-table td { vertical-align: middle !important; }
+  .era-badge { 
+    background: #667eea; 
+    color: white; 
+    border-radius: 50%; 
+    width: 30px; 
+    height: 30px; 
+    display: inline-flex; 
+    align-items: center; 
+    justify-content: center; 
+    font-weight: bold; 
+    margin-right: 10px; 
+  }
+  .type-badges { margin-top: 10px; }
+  .type-badge { 
+    display: inline-block; 
+    padding: 5px 12px; 
+    margin-right: 8px; 
+    border-radius: 3px; 
+    font-size: 12px; 
+    font-weight: 600; 
+  }
+  .badge-pbaas { background: #8b5cf6; color: white; }
+  .badge-gateway { background: #3b82f6; color: white; }
+  .badge-token { background: #10b981; color: white; }
+  .badge-fractional { background: #f59e0b; color: white; }
+  .badge-nft { background: #ec4899; color: white; }
+</style>
+
+<section>
+  <div class="container currency-explorer">
+    <h1>Currency Explorer</h1>
+    
+    <div class="well">
+      <div class="input-group">
+        <input type="text" class="form-control" ng-model="searchQuery" placeholder="Enter currency name (e.g., VRSC, vETH, CHIPS, DAI.vETH)">
+        <span class="input-group-btn">
+          <button class="btn btn-primary" ng-click="searchCurrency()">Search</button>
+        </span>
+      </div>
+      <div style="margin-top: 10px;">
+        <button class="btn btn-sm btn-default" ng-click="quickSearch('VRSC')">VRSC</button>
+        <button class="btn btn-sm btn-default" ng-click="quickSearch('vETH')">vETH</button>
+        <button class="btn btn-sm btn-default" ng-click="quickSearch('CHIPS')">CHIPS</button>
+        <button class="btn btn-sm btn-default" ng-click="quickSearch('DAI.vETH')">DAI.vETH</button>
+      </div>
+    </div>
+
+    <div ng-show="loading" class="alert alert-info">
+      <span class="glyphicon glyphicon-refresh glyphicon-spin"></span> Loading currency data...
+    </div>
+
+    <div ng-show="error" class="alert alert-danger">
+      <strong>Error:</strong> {{error}}
+    </div>
+
+    <div ng-show="currency" class="panel panel-default">
+      <div class="panel-body">
+        <div class="currency-header">
+          <h2>{{currency.name}}</h2>
+          <div class="subtitle">{{currency.fullyqualifiedname || currency.name}}</div>
+          <div class="type-badges">
+            <span class="type-badge badge-pbaas" ng-show="isPBaaSChain()">⛓️ PBaaS Chain</span>
+            <span class="type-badge badge-gateway" ng-show="isGateway()">🌉 Gateway</span>
+            <span class="type-badge badge-token" ng-show="isToken()">🪙 Token</span>
+            <span class="type-badge badge-fractional" ng-show="isFractional()">📊 Fractional</span>
+            <span class="type-badge badge-nft" ng-show="isNFT()">🖼️ NFT</span>
+          </div>
+        </div>
+
+        <div class="section-header">Basic Information</div>
+        <table class="table table-striped">
+          <tr>
+            <td style="width: 30%;">
+              <strong>Currency ID</strong>
+              <span class="help-icon glyphicon glyphicon-question-sign" 
+                    title="Unique identifier for this currency on the blockchain" 
+                    data-toggle="tooltip" 
+                    data-placement="right"></span>
+            </td>
+            <td style="font-family: monospace; font-size: 12px;">{{currency.currencyid}}</td>
+          </tr>
+          <tr>
+            <td>
+              <strong>System ID</strong>
+              <span class="help-icon glyphicon glyphicon-question-sign" 
+                    title="The blockchain system this currency belongs to" 
+                    data-toggle="tooltip" 
+                    data-placement="right"></span>
+            </td>
+            <td>
+              <strong>{{getCurrencyName(currency.systemid)}}</strong><br>
+              <small style="font-family: monospace; font-size: 11px; color: #777;">{{currency.systemid}}</small>
+            </td>
+          </tr>
+          <tr ng-show="currency.parent">
+            <td>
+              <strong>Parent</strong>
+              <span class="help-icon glyphicon glyphicon-question-sign" 
+                    title="The parent currency or system of this currency" 
+                    data-toggle="tooltip" 
+                    data-placement="right"></span>
+            </td>
+            <td>
+              <strong>{{getCurrencyName(currency.parent)}}</strong><br>
+              <small style="font-family: monospace; font-size: 11px; color: #777;">{{currency.parent}}</small>
+            </td>
+          </tr>
+          <tr ng-show="currency.gateway">
+            <td>
+              <strong>Gateway</strong>
+              <span class="help-icon glyphicon glyphicon-question-sign" 
+                    title="The gateway contract used for cross-chain transfers" 
+                    data-toggle="tooltip" 
+                    data-placement="right"></span>
+            </td>
+            <td>
+              <strong>{{getCurrencyName(currency.gateway)}}</strong><br>
+              <small style="font-family: monospace; font-size: 11px; color: #777;">{{currency.gateway}}</small>
+            </td>
+          </tr>
+          <tr ng-show="currency.version">
+            <td>
+              <strong>Version</strong>
+              <span class="help-icon glyphicon glyphicon-question-sign" 
+                    title="Currency definition version number" 
+                    data-toggle="tooltip" 
+                    data-placement="right"></span>
+            </td>
+            <td>{{currency.version}}</td>
+          </tr>
+          <tr ng-show="currency.launchsystemid">
+            <td>
+              <strong>Launch System</strong>
+              <span class="help-icon glyphicon glyphicon-question-sign" 
+                    title="The system where this currency was initially launched" 
+                    data-toggle="tooltip" 
+                    data-placement="right"></span>
+            </td>
+            <td>
+              <strong>{{getCurrencyName(currency.launchsystemid)}}</strong><br>
+              <small style="font-family: monospace; font-size: 11px; color: #777;">{{currency.launchsystemid}}</small>
+            </td>
+          </tr>
+        </table>
+
+        <div class="section-header">Options & Flags</div>
+        <table class="table table-striped">
+          <tr>
+            <td style="width: 30%;">
+              <strong>Options (Decimal)</strong>
+              <span class="help-icon glyphicon glyphicon-question-sign" 
+                    title="Bitwise flags that define currency capabilities and restrictions" 
+                    data-toggle="tooltip" 
+                    data-placement="right"></span>
+            </td>
+            <td>
+              {{currency.options}} (0x{{currency.options.toString(16).toUpperCase()}})
+              <div style="margin-top: 8px;">
+                <span class="option-badge" ng-show="isFractional()">FRACTIONAL (1)</span>
+                <span class="option-badge" ng-show="hasOption(2)">ID RESTRICTED (2)</span>
+                <span class="option-badge" ng-show="hasOption(4)">ID STAKING (4)</span>
+                <span class="option-badge" ng-show="hasOption(8)">ID REFERRALS (8)</span>
+                <span class="option-badge" ng-show="hasOption(16)">REFERRAL REQUIRED (16)</span>
+                <span class="option-badge" ng-show="isToken()">TOKEN (32)</span>
+                <span class="option-badge" ng-show="isGateway()">GATEWAY (128)</span>
+                <span class="option-badge" ng-show="isPBaaSChain()">PBAAS CHAIN (256)</span>
+                <span class="option-badge" ng-show="hasOption(512)">GATEWAY CONVERTER (512)</span>
+                <span class="option-badge" ng-show="hasOption(1024)">NAME CONTROLLER (1024)</span>
+                <span class="option-badge" ng-show="isNFT()">NFT (2048)</span>
+                <span class="option-badge" ng-show="hasOption(4096)">NO IDS (4096)</span>
+              </div>
+            </td>
+          </tr>
+        </table>
+
+        <div class="section-header">Protocol Information</div>
+        <table class="table table-striped">
+          <tr ng-show="currency.notarizationprotocol">
+            <td style="width: 30%;">
+              <strong>Notarization Protocol</strong>
+              <span class="help-icon glyphicon glyphicon-question-sign" 
+                    title="Method used to validate and confirm cross-chain transactions" 
+                    data-toggle="tooltip" 
+                    data-placement="right"></span>
+            </td>
+            <td>{{getNotarizationProtocol()}}</td>
+          </tr>
+          <tr ng-show="currency.proofprotocol">
+            <td>
+              <strong>Proof Protocol</strong>
+              <span class="help-icon glyphicon glyphicon-question-sign" 
+                    title="Cryptographic proof system used for transaction validation" 
+                    data-toggle="tooltip" 
+                    data-placement="right"></span>
+            </td>
+            <td>{{getProofProtocol()}}</td>
+          </tr>
+          <tr ng-show="currency.notarizationperiod">
+            <td>
+              <strong>Notarization Period</strong>
+              <span class="help-icon glyphicon glyphicon-question-sign" 
+                    title="Time interval between notarizations (in minutes)" 
+                    data-toggle="tooltip" 
+                    data-placement="right"></span>
+            </td>
+            <td>{{currency.notarizationperiod}} minutes</td>
+          </tr>
+          <tr ng-show="currency.minnotariesconfirm">
+            <td>
+              <strong>Min Notaries to Confirm</strong>
+              <span class="help-icon glyphicon glyphicon-question-sign" 
+                    title="Minimum number of notaries required to confirm a transaction" 
+                    data-toggle="tooltip" 
+                    data-placement="right"></span>
+            </td>
+            <td>{{currency.minnotariesconfirm}}</td>
+          </tr>
+        </table>
+
+        <div class="section-header">Block Information</div>
+        <table class="table table-striped">
+          <tr ng-show="currency.startblock">
+            <td style="width: 30%;">
+              <strong>Start Block</strong>
+              <span class="help-icon glyphicon glyphicon-question-sign" 
+                    title="Block height when this currency becomes active" 
+                    data-toggle="tooltip" 
+                    data-placement="right"></span>
+            </td>
+            <td>{{currency.startblock | number}}</td>
+          </tr>
+          <tr ng-show="currency.endblock">
+            <td>
+              <strong>End Block</strong>
+              <span class="help-icon glyphicon glyphicon-question-sign" 
+                    title="Block height when this currency deactivates (0 = never)" 
+                    data-toggle="tooltip" 
+                    data-placement="right"></span>
+            </td>
+            <td>{{currency.endblock === 0 ? 'Never' : (currency.endblock | number)}}</td>
+          </tr>
+          <tr ng-show="currency.lastconfirmedheight">
+            <td>
+              <strong>Last Confirmed Height</strong>
+              <span class="help-icon glyphicon glyphicon-question-sign" 
+                    title="Most recent block height that has been notarized" 
+                    data-toggle="tooltip" 
+                    data-placement="right"></span>
+            </td>
+            <td>{{currency.lastconfirmedheight | number}}</td>
+          </tr>
+          <tr ng-show="currency.bestheight">
+            <td>
+              <strong>Best Height</strong>
+              <span class="help-icon glyphicon glyphicon-question-sign" 
+                    title="Current best known block height" 
+                    data-toggle="tooltip" 
+                    data-placement="right"></span>
+            </td>
+            <td>{{currency.bestheight | number}}</td>
+          </tr>
+          <tr ng-show="currency.blocktime">
+            <td>
+              <strong>Block Time</strong>
+              <span class="help-icon glyphicon glyphicon-question-sign" 
+                    title="Target time between blocks in seconds" 
+                    data-toggle="tooltip" 
+                    data-placement="right"></span>
+            </td>
+            <td>{{currency.blocktime}} seconds</td>
+          </tr>
+          <tr ng-show="currency.powaveragingwindow">
+            <td>
+              <strong>PoW Averaging Window</strong>
+              <span class="help-icon glyphicon glyphicon-question-sign" 
+                    title="Number of blocks used for difficulty adjustment calculation" 
+                    data-toggle="tooltip" 
+                    data-placement="right"></span>
+            </td>
+            <td>{{currency.powaveragingwindow}} blocks</td>
+          </tr>
+        </table>
+
+        <div ng-show="currency.currencies && currency.currencies.length" class="section-header">Reserve Currencies</div>
+        <table ng-show="currency.currencies && currency.currencies.length" class="table table-bordered reserves-table">
+          <thead style="background: #f5f5f5;">
+            <tr>
+              <th>Currency Name</th>
+              <th>Currency ID</th>
+              <th>
+                Weight
+                <span class="help-icon glyphicon glyphicon-question-sign" 
+                      title="Proportion of this currency in the reserve basket" 
+                      data-toggle="tooltip"></span>
+              </th>
+              <th>
+                Conversion Rate
+                <span class="help-icon glyphicon glyphicon-question-sign" 
+                      title="Exchange rate between this currency and the reserve" 
+                      data-toggle="tooltip"></span>
+              </th>
+              <th>
+                Min Preconvert
+                <span class="help-icon glyphicon glyphicon-question-sign" 
+                      title="Minimum amount required for pre-launch conversion" 
+                      data-toggle="tooltip"></span>
+              </th>
+              <th>
+                Max Preconvert
+                <span class="help-icon glyphicon glyphicon-question-sign" 
+                      title="Maximum amount allowed for pre-launch conversion" 
+                      data-toggle="tooltip"></span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="currencyId in currency.currencies track by $index">
+              <td><strong>{{getCurrencyName(currencyId)}}</strong></td>
+              <td style="font-family: monospace; font-size: 11px;">{{currencyId}}</td>
+              <td>{{currency.weights[$index] || 'N/A'}}</td>
+              <td>{{currency.conversions[$index] || 'N/A'}}</td>
+              <td>{{currency.minpreconvert[$index] || 0}}</td>
+              <td>{{currency.maxpreconvert[$index] || 0}}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div ng-show="currency.eras && currency.eras.length" class="section-header">Emission Eras</div>
+        <div ng-show="currency.eras && currency.eras.length" style="margin-bottom: 20px;">
+          <div ng-repeat="era in currency.eras" class="well" style="margin-bottom: 15px;">
+            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+              <span class="era-badge">{{$index + 1}}</span>
+              <strong>Era {{$index + 1}}</strong>
+            </div>
+            <table class="table table-condensed" style="margin: 0;">
+              <tr>
+                <td style="width: 30%;"><strong>Block Reward</strong></td>
+                <td>{{era.reward / 100000000 | number:8}} {{currency.name}}</td>
+              </tr>
+              <tr>
+                <td><strong>Decay Rate</strong></td>
+                <td>{{era.decay / 100000000 | number:8}}</td>
+              </tr>
+              <tr>
+                <td><strong>Halving Period</strong></td>
+                <td>{{era.halving | number}} blocks</td>
+              </tr>
+              <tr>
+                <td><strong>Era End Block</strong></td>
+                <td>{{era.eraend === 0 ? 'Never' : (era.eraend | number)}}</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+
+        <div ng-show="currency.notaries && currency.notaries.length" class="section-header">Notaries ({{currency.notaries.length}})</div>
+        <div ng-show="currency.notaries && currency.notaries.length" class="well">
+          <div ng-repeat="notary in currency.notaries" style="display: inline-block; margin: 5px; padding: 5px 10px; background: #f5f5f5; border-radius: 3px; font-family: monospace; font-size: 12px;">
+            {{notary}}
+          </div>
+        </div>
+
+        <div ng-show="currency.nodes && currency.nodes.length" class="section-header">Network Nodes ({{currency.nodes.length}})</div>
+        <table ng-show="currency.nodes && currency.nodes.length" class="table table-striped">
+          <thead>
+            <tr>
+              <th>Network Address</th>
+              <th>Node Identity</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="node in currency.nodes">
+              <td style="font-family: monospace; font-size: 12px;">{{node.networkaddress}}</td>
+              <td style="font-family: monospace; font-size: 12px;">{{node.nodeidentity}}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="section-header">Fees</div>
+        <table class="table table-striped">
+          <tr ng-show="currency.idregistrationfees">
+            <td style="width: 30%;">
+              <strong>ID Registration Fee</strong>
+              <span class="help-icon glyphicon glyphicon-question-sign" 
+                    title="Fee to register a new identity on this currency" 
+                    data-toggle="tooltip" 
+                    data-placement="right"></span>
+            </td>
+            <td>{{currency.idregistrationfees | number}} {{getSystemName()}}</td>
+          </tr>
+          <tr ng-show="currency.idimportfees">
+            <td>
+              <strong>ID Import Fee</strong>
+              <span class="help-icon glyphicon glyphicon-question-sign" 
+                    title="Fee to import an identity from another chain" 
+                    data-toggle="tooltip" 
+                    data-placement="right"></span>
+            </td>
+            <td>{{currency.idimportfees | number}} {{getSystemName()}}</td>
+          </tr>
+          <tr ng-show="currency.idreferrallevels">
+            <td>
+              <strong>ID Referral Levels</strong>
+              <span class="help-icon glyphicon glyphicon-question-sign" 
+                    title="Number of referral levels that receive rewards" 
+                    data-toggle="tooltip" 
+                    data-placement="right"></span>
+            </td>
+            <td>{{currency.idreferrallevels}}</td>
+          </tr>
+          <tr ng-show="currency.currencyregistrationfee">
+            <td>
+              <strong>Currency Registration Fee</strong>
+              <span class="help-icon glyphicon glyphicon-question-sign" 
+                    title="Fee to register a new currency" 
+                    data-toggle="tooltip" 
+                    data-placement="right"></span>
+            </td>
+            <td>{{currency.currencyregistrationfee | number}} {{getSystemName()}}</td>
+          </tr>
+          <tr ng-show="currency.pbaassystemregistrationfee">
+            <td>
+              <strong>PBaaS System Launch Fee</strong>
+              <span class="help-icon glyphicon glyphicon-question-sign" 
+                    title="Fee to launch a new PBaaS blockchain" 
+                    data-toggle="tooltip" 
+                    data-placement="right"></span>
+            </td>
+            <td>{{currency.pbaassystemregistrationfee | number}} {{getSystemName()}}</td>
+          </tr>
+          <tr ng-show="currency.transactionimportfee">
+            <td>
+              <strong>Transaction Import Fee</strong>
+              <span class="help-icon glyphicon glyphicon-question-sign" 
+                    title="Fee for importing transactions from other chains" 
+                    data-toggle="tooltip" 
+                    data-placement="right"></span>
+            </td>
+            <td>{{currency.transactionimportfee | number}} {{getSystemName()}}</td>
+          </tr>
+          <tr ng-show="currency.transactionexportfee">
+            <td>
+              <strong>Transaction Export Fee</strong>
+              <span class="help-icon glyphicon glyphicon-question-sign" 
+                    title="Fee for exporting transactions to other chains" 
+                    data-toggle="tooltip" 
+                    data-placement="right"></span>
+            </td>
+            <td>{{currency.transactionexportfee | number}} {{getSystemName()}}</td>
+          </tr>
+        </table>
+
+        <div ng-show="currency.definitiontxid" class="section-header">Definition Transaction</div>
+        <table ng-show="currency.definitiontxid" class="table table-striped">
+          <tr>
+            <td style="width: 30%;">
+              <strong>Definition TX ID</strong>
+              <span class="help-icon glyphicon glyphicon-question-sign" 
+                    title="Transaction that created this currency definition" 
+                    data-toggle="tooltip" 
+                    data-placement="right"></span>
+            </td>
+            <td style="font-family: monospace; font-size: 12px;">
+              <a href="tx/{{currency.definitiontxid}}">{{currency.definitiontxid}}</a>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>Definition TX Output</strong></td>
+            <td>{{currency.definitiontxout}}</td>
+          </tr>
+        </table>
+
+        <div style="margin-top: 20px;">
+          <a ng-href="api/getcurrency/{{currency.name}}" target="_blank" class="btn btn-primary">
+            <span class="glyphicon glyphicon-file"></span> View Full JSON
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  // Initialize Bootstrap tooltips
+  angular.element(document).ready(function() {
+    setTimeout(function() {
+      $('[data-toggle="tooltip"]').tooltip();
+    }, 500);
+  });
+</script>

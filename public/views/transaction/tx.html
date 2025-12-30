@@ -1,504 +1,294 @@
-<div class="line-bot row" data-ng-hide="!tx">
-  <div class="col-xs-7 col-md-8">
-    <div class="ellipsis">
-      <a class="btn-expand" title="Show/Hide items details" data-ng-click="itemsExpanded = !itemsExpanded">
-        <span class="glyphicon glyphicon-plus-sign" data-ng-class="{'glyphicon-minus-sign': itemsExpanded}"></span>
-      </a>
-      <a href="tx/{{tx.txid}}">{{tx.txid}}</a>
-      <span class="btn-copy" clip-copy="tx.txid"></span>
-      <a href="api/detailedtx/{{tx.txid}}" target="_blank" style="margin-left: 5px; text-decoration: none;">
-        <span style="display: inline-block; width: 16px; height: 16px; background-color: #000; border-radius: 50%; text-align: center; line-height: 16px; font-size: 11px; font-weight: bold; color: #fff; cursor: pointer; vertical-align: middle;" title="View API JSON">i</span>
-      </a>
-    </div>
-  </div>
-  <div class="col-xs-5 col-md-4 text-right text-muted">
-    <div data-ng-show="tx.firstSeenTs">
-      <span translate>first seen at</span>
-      <time>{{tx.firstSeenTs * 1000 | date:'medium'}}</time>
-    </div>
-    <div data-ng-show="tx.blocktime && !tx.firstSeenTs">
-      <span translate>mined</span>
-      <time>{{tx.time * 1000 | date:'medium'}}</time>
-    </div>
-  </div>
-</div>
-<div class="row line-mid">
-  <div class="col-md-12">
-    <div class="row" data-ng-if="!tx.bindingSig && (!tx.vjoinsplit || tx.vjoinsplit.length==0)">
-      <div class="col-md-12 transaction-vin-vout">
-        <div class="ellipsis">
-          <span translate>No Shielded Spends and Outputs </span> 
-        </div>
+<!-- Compact Inputs/Outputs Section - No Tabs, Side by Side -->
+<div data-ng-hide="!tx" style="margin: 0; padding: 0;">
+  
+  <div style="display: flex; gap: 2px; flex-wrap: wrap; margin: 0;">
+    
+    <!-- INPUTS SECTION -->
+    <div style="flex: 1; min-width: 400px; background: #fff; border: 1px solid #e7eaf3; border-radius: 4px;">
+      <div style="background: #f8f9fa; padding: 4px 8px; border-bottom: 2px solid #e7eaf3;">
+        <strong style="font-size: 13px;"><span translate>Inputs</span> ({{tx.vin.length}})</strong>
       </div>
-    </div>
-    <div class="row" data-ng-if="(tx.spendDescs && tx.spendDescs.length > 0) || (tx.outputDescs && tx.outputDescs.length > 0)">
-      <div class="panel panel-default">
-        <div class="panel-body transaction-vin-vout">
-          <div class="col-md-3 col-xs-12">
-            <div data-ng-if="tx.valueBalance < 0">
-              <div class="pull-right btc-value">
-                {{$root.currency.getConvertion(-tx.valueBalance)}}
-              </div>
-              <div class="ellipsis">
-                <span>Public input</span>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-1 col-xs-12">
-            <div class="hidden-xs hidden-sm text-center">
-              <span class="glyphicon glyphicon-chevron-right text-muted"></span>
-            </div>
-            <div class="hidden-md hidden-lg text-center">
-              <span class="glyphicon glyphicon-chevron-down text-muted"></span>
-            </div>
-          </div>
-          <div class="col-md-4 col-xs-12">
-            <div class="ellipsis text-center">
-              <span>Shielded Spends ({{tx.spendDescs.length}}) --> Shielded Outputs ({{tx.outputDescs.length}})</span>
-            </div>
-          </div>
-          <div class="col-md-1 col-xs-12">
-            <div class="hidden-xs hidden-sm text-center">
-              <span class="glyphicon glyphicon-chevron-right text-muted"></span>
-            </div>
-            <div class="hidden-md hidden-lg text-center">
-              <span class="glyphicon glyphicon-chevron-down text-muted"></span>
-            </div>
-          </div>
-          <div class="col-md-3 col-xs-12">
-            <div data-ng-if="tx.valueBalance > 0">
-              <div class="pull-right btc-value">
-                {{$root.currency.getConvertion(tx.valueBalance)}}
-              </div>
-              <div class="ellipsis">
-                <span>Public output</span>
-              </div>
-            </div>
-          </div>
-        </div>
+      
+      <div data-ng-if="tx.isCoinBase" style="padding: 8px; text-align: center; color: #6c757d; font-size: 12px;">
+        <span class="glyphicon glyphicon-star" style="font-size: 20px; margin-bottom: 4px; display: block;"></span>
+        <span translate>Newly Generated Coins (Coinbase)</span>
       </div>
-    </div>
-    <div class="row" data-ng-if="(!tx.vjoinsplit || tx.vjoinsplit.length == 0) && !tx.bindingSig">
-      <div class="col-md-12 transaction-vin-vout">
-        <div class="ellipsis">
-          <span translate>No JoinSplits  </span> 
-        </div>
-      </div>
-    </div>
-    <div class="row" data-ng-if="tx.vjoinsplit && tx.vjoinsplit.length != 0">
-
-      <!-- <<< Simple view -->
-      <div data-ng-if="!itemsExpanded" data-ng-init="currentJSNoExpanded=0; sizeJSNoExpanded=5">
-        <div class="panel panel-default" data-ng-repeat="vjs in tx.vjoinsplit| startFrom:currentJSNoExpanded*sizeJSNoExpanded | limitTo:sizeJSNoExpanded">
-          <div class="panel-body transaction-vin-vout">
-            <div class="col-md-3 col-xs-12">
-              <div class="pull-right btc-value">
-                {{$root.currency.getConvertion(vjs.vpub_old)}} 
+      
+      <table class="table table-hover" style="margin-bottom: 0; font-size: 12px;" data-ng-if="!tx.isCoinBase && tx.vin.length > 0">
+        <tbody>
+          <tr data-ng-repeat="vin in tx.vin" data-ng-show="$index < 10 || showAllInputs" style="border-bottom: 1px solid #f0f0f0;">
+            <td style="padding: 3px 4px; vertical-align: middle; width: 30px; color: #6c757d; font-size: 11px;">{{vin.n}}</td>
+            <td style="padding: 3px 4px; vertical-align: middle;">
+              <div style="display: flex; align-items: center;">
+                <a href="tx/{{vin.txid}}" style="margin-right: 6px; color: #6c757d;" title="From: {{vin.txid}}:{{vin.vout}}">
+                  <span class="glyphicon glyphicon-link" style="font-size: 10px;"></span>
+                </a>
+                <span data-ng-show="vin.notAddr" style="font-family: monospace; font-size: 11px;">{{vin.addr}}</span>
+                <a href="address/{{vin.addr}}" data-ng-show="!vin.notAddr" style="font-family: monospace; font-size: 11px;" data-ng-style="(vin.addr == address.addrStr || vin.addr == address.identityinfo.identity.identityaddress) && {'font-weight': 'bold', 'color': '#fff', 'background-color': '#3165D4', 'padding': '2px 6px', 'border-radius': '3px'} || {}">{{vin.addr}}</a>
+                <span class="btn-copy" clip-copy="vin.addr" style="margin-left: 6px;"></span>
               </div>
-              <div class="ellipsis">
-                <span>Public input</span>
+              <div data-ng-show="vin.dbError" style="color: #dc3545; font-size: 10px;">
+                <span class="glyphicon glyphicon-warning-sign"></span> {{vin.dbError}}
               </div>
-            </div>
-            <div class="col-md-1 col-xs-12">
-              <div class="hidden-xs hidden-sm text-center">
-                <span class="glyphicon glyphicon-chevron-right text-muted"></span>
+              <div data-ng-show="vin.doubleSpentTxID" style="color: #dc3545; font-size: 10px;">
+                <span class="glyphicon glyphicon-warning-sign"></span> <a href="tx/{{vin.doubleSpentTxID}}">Double Spend</a>
               </div>
-              <div class="hidden-md hidden-lg text-center">
-                <span class="glyphicon glyphicon-chevron-down text-muted"></span>
-              </div>
-            </div>
-            <div class="col-md-4 col-xs-12">
-              <div class="ellipsis text-center">
-                <span>JoinSplit [{{vjs.n}}]</span>
-              </div>
-            </div>
-            <div class="col-md-1 col-xs-12">
-              <div class="hidden-xs hidden-sm text-center">
-                <span class="glyphicon glyphicon-chevron-right text-muted"></span>
-              </div>
-              <div class="hidden-md hidden-lg text-center">
-                <span class="glyphicon glyphicon-chevron-down text-muted"></span>
-              </div>
-            </div>
-            <div class="col-md-3 col-xs-12">
-              <div class="pull-right btc-value">
-                {{$root.currency.getConvertion(vjs.vpub_new)}}
-              </div>
-              <div class="ellipsis">
-                <span>Public output</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="showmore_collapse text-left" data-ng-show="tx.vjoinsplit.length > 5" data-ng-class="{ 'hidden': itemsExpanded}">
-          <button type="button" class="btn btn-info btn-sm" ng-hide="sizeJSNoExpanded != tx.vjoinsplit.length" ng-click="currentJSNoExpanded=0; sizeJSNoExpanded=5"><i class="glyphicon glyphicon-chevron-up"></i>
-            <span translate>Show less</span></button>
-          <button type="button" class="btn btn-info btn-sm" ng-hide="currentJSNoExpanded >= tx.vjoinsplit.length/sizeJSNoExpanded - 1" ng-click="currentJSNoExpanded=0; sizeJSNoExpanded=tx.vjoinsplit.length"><i class="glyphicon glyphicon-chevron-down"></i>
-            <span translate>Show more</span></button>
-        </div>
-      </div>
-
-      <!-- <<< Full view -->
-      <div data-ng-if="itemsExpanded" data-ng-init="currentJSExpanded=0; sizeJSExpanded=(from_vjs) ? tx.vjoinsplit.length : 5; fromVjsCollapsed=(from_vjs)">
-        <div data-ng-repeat="vjs in tx.vjoinsplit| startFrom:currentJSExpanded*sizeJSExpanded | limitTo:sizeJSExpanded" data-ng-if="fromVjsCollapsed ? v_index == vjs.n : 1">
-          <div class="panel panel-default transaction-vin-vout">
-            <div class="panel-body">
-              <div class="col-md-3 col-xs-12">
-                <div class="pull-right btc-value">
-                  {{$root.currency.getConvertion(vjs.vpub_old)}}
-                </div>
-                <div class="ellipsis">
-                  <span translate>Public input</span>
-                </div>
-              </div>
-              <div class="col-md-1 col-xs-12">
-                <div class="hidden-xs hidden-sm text-center">
-                  <span class="glyphicon glyphicon-chevron-right text-muted"></span>
-                </div>
-                <div class="hidden-md hidden-lg text-center">
-                  <span class="glyphicon glyphicon-chevron-down text-muted"></span>
-                </div>
-              </div>
-              <div class="col-md-4 col-xs-12">
-                <div class="ellipsis text-center">
-                  <span>JoinSplit [{{vjs.n}}]</span>
-                </div>
-              </div>
-              <div class="col-md-1 col-xs-12">
-                <div class="hidden-xs hidden-sm text-center">
-                  <span class="glyphicon glyphicon-chevron-right text-muted"></span>
-                </div>
-                <div class="hidden-md hidden-lg text-center">
-                  <span class="glyphicon glyphicon-chevron-down text-muted"></span>
-                </div>
-              </div>
-              <div class="col-md-3 col-xs-12">
-                <div class="pull-right btc-value">
-                  {{$root.currency.getConvertion(vjs.vpub_new)}}
-                </div>
-                <div class="ellipsis">
-                  <span translate>Public output</span>
-                </div>
-              </div>
-            </div> <!-- END OF PANEL BODY -->
-          </div> <!-- END OF PANEL-DEFAULT -->
-        </div>
-        <div class="text-left">
-          <button type="button" class="btn btn-default btn-sm" data-ng-show="(from_vjs) && tx.vjoinsplit.length > 1" data-ng-disabled="fromVjsCollapsed" data-ng-click="currentJSExpanded=0; sizeJSExpanded=tx.vjoinsplit.length;fromVjsCollapsed=1">
-            <span translate>Show input</span> #{{ v_index }}</button>
-          <button type="button" class="btn btn-default btn-sm" data-ng-show="(from_vjs) && tx.vjoinsplit.length > 1" data-ng-disabled="!fromVinCollapsed" data-ng-click="currentJSExpanded=0; sizeJSExpanded=tx.vjoinsplit.length;fromVjsCollapsed=0">
-            <span translate>Show all</span></button>
-        </div>
-        <div class="showmore_collapse text-left" data-ng-show="tx.vjoinsplit.length > 5 && !fromVjsCollapsed" data-ng-class="{ 'hidden': !itemsExpanded}">
-          <button type="button" class="btn btn-info btn-sm" ng-hide="sizeJSExpanded != tx.vjoinsplit.length" ng-click="currentJSExpanded=0; sizeJSExpanded=5"><i class="glyphicon glyphicon-chevron-up"></i>
-            <span translate>Show less</span></button>
-          <button type="button" class="btn btn-info btn-sm" ng-hide="currentJSExpanded >= tx.vjoinsplit.length/sizeJSExpanded - 1" ng-click="currentJSExpanded=0; sizeJSExpanded=tx.vjoinsplit.length"><i class="glyphicon glyphicon-chevron-down"></i>
-            <span translate>Show more</span></button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-<div class="row">
-  <div class="col-md-6">
-    <div class="hidden-xs hidden-sm text-center">
-      <span class="lead glyphicon glyphicon-chevron-up text-muted"></span>
-    </div>
-  </div>
-  <div class="col-md-6">
-    <div class="hidden-xs hidden-sm text-center">
-      <span class="lead glyphicon glyphicon-chevron-down text-muted"></span>
-    </div>
-  </div>
-</div>
-<div class="row line-mid">
-  <div class="col-md-5">
-    <div class="row" data-ng-if="tx.vin.length == 0">
-      <div class="col-md-12 transaction-vin-vout">
-        <div class="ellipsis">
-          <span translate>No Inputs</span>
-        </div>
-      </div>
-    </div>
-    <div class="row" data-ng-if="tx.vin.length != 0 && tx.isCoinBase">
-      <div class="col-md-12 transaction-vin-vout" data-ng-repeat="vin in tx.vin">
-        <div class="ellipsis">
-          <span translate>No Inputs (Newly Generated Coins)</span>
-        </div>
-      </div>
-    </div>
-    <div class="row" data-ng-if="tx.vin.length != 0 && !tx.isCoinBase">
-
-      <!-- <<< Simple view -->
-      <div data-ng-if="!itemsExpanded" data-ng-init="currentInNoExpanded=0; sizeInNoExpanded=5">
-        <div class="panel panel-default" data-ng-repeat="vin in tx.vinSimple| startFrom:currentInNoExpanded*sizeInNoExpanded | limitTo:sizeInNoExpanded">
-          <div class="panel-body transaction-vin-vout">
-            <div class="pull-right btc-value" data-ng-class="{'text-danger': $root.currentAddr == vin.addr}">
+            </td>
+            <td style="padding: 3px 4px; vertical-align: middle; text-align: right; font-family: monospace; font-weight: 500; font-size: 11px; white-space: nowrap;">
               {{$root.currency.getConvertion(vin.value)}}
-            </div>
-            <div class="ellipsis">
-              <span data-ng-show="vin.notAddr">{{vin.addr}}</span>
-              <span class="text-muted" title="Current Verus Address" data-ng-show="vin.addr == $root.currentAddr">{{vin.addr}}</span>
-              <a href="address/{{vin.addr}}" data-ng-show="!vin.notAddr && vin.addr != $root.currentAddr">{{vin.addr}}</a>
-            </div>
-            <div data-ng-show="vin.unconfirmedInput" class="text-danger"> <span class="glyphicon glyphicon-warning-sign"></span> (Input unconfirmed)</div>
-            <div data-ng-show="vin.dbError" class="text-danger">
-              <span class="glyphicon glyphicon-warning-sign"></span> 
-              <span translate>Incoherence in levelDB detected:</span> {{vin.dbError}}
-            </div>
-            <div data-ng-show="vin.doubleSpentTxID" class="text-danger"> 
-              <span class="glyphicon glyphicon-warning-sign"></span> 
-              <span translate>Double spent attempt detected. From tx:</span> 
-              <a href="tx/{{vin.doubleSpentTxID}}">{{vin.doubleSpentTxID}},{{vin.doubleSpentIndex}}</a>
-            </div>
-          </div>
-        </div>
-        <div class="showmore_collapse text-left" data-ng-show="tx.vinSimple.length > 5" data-ng-class="{ 'hidden': itemsExpanded}">
-          <button type="button" class="btn btn-info btn-sm" ng-hide="sizeInNoExpanded != tx.vinSimple.length" ng-click="currentInNoExpanded=0; sizeInNoExpanded=5"><i class="glyphicon glyphicon-chevron-up"></i> 
-            <span translate>Show less</span></button>
-          <button type="button" class="btn btn-info btn-sm" ng-hide="currentInNoExpanded >= tx.vinSimple.length/sizeInNoExpanded - 1" ng-click="currentInNoExpanded=0; sizeInNoExpanded=tx.vinSimple.length"><i class="glyphicon glyphicon-chevron-down"></i> 
-            <span translate>Show more</span></button>
-        </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div data-ng-if="!tx.isCoinBase && tx.vin.length > 10 && !showAllInputs" style="padding: 8px; text-align: center; border-top: 1px solid #f0f0f0;">
+        <button class="btn btn-sm btn-default" ng-click="showAllInputs = true; $parent.showAllInputs = true" style="font-size: 11px;">
+          <span class="glyphicon glyphicon-chevron-down"></span> Show All {{tx.vin.length}} Inputs
+        </button>
       </div>
-
-      <!-- <<< Full view -->
-      <div data-ng-if="itemsExpanded" data-ng-init="currentInExpanded=0; sizeInExpanded=(from_vin) ? tx.vin.length : 5; fromVinCollapsed=(from_vin)">
-        <div data-ng-repeat="vin in tx.vin| startFrom:currentInExpanded*sizeInExpanded | limitTo:sizeInExpanded" data-ng-if="fromVinCollapsed ? v_index == vin.n : 1">
-          <div class="panel panel-default transaction-vin-vout">
-            <div class="panel-body">
-              <div class="pull-right btc-value">
-                {{$root.currency.getConvertion(vin.value)}}
-              </div>
-              <div class="ellipsis">
-                <a class="glyphicon glyphicon-chevron-right" href="tx/{{vin.txid}}/>/{{vin.vout}}" title="Outpoint: {{vin.txid}},{{vin.vout}}"></a>
-                <span data-ng-show="vin.notAddr">{{vin.addr}}</span>
-                <a href="address/{{vin.addr}}" data-ng-show="!vin.notAddr">{{vin.addr}}</a>
-              </div>
-              <div data-ng-show="vin.unconfirmedInput" class="text-danger"> 
-                <span class="glyphicon glyphicon-warning-sign"></span> 
-                <span translate>(Input unconfirmed)</span>
-              </div>
-              <div data-ng-show="vin.dbError" class="text-danger"> 
-                <span class="glyphicon glyphicon-warning-sign"></span> 
-                <span translate>Incoherence in levelDB detected:</span> {{vin.dbError}}
-              </div>
-              <div data-ng-show="vin.doubleSpentTxID" class="text-danger"> 
-                <span class="glyphicon glyphicon-warning-sign"></span> 
-                <span translate>Double spent attempt detected. From tx:</span> 
-                <a href="tx/{{<vin class=""></vin>doubleSpentTxID}}">{{vin.doubleSpentTxID}},{{vin.doubleSpentIndex}}</a>
-              </div>
-            </div> <!-- END OF PANEL BODY -->
-          </div> <!-- END OF PANEL-DEFAULT -->
-          <div class="small" style="margin-left:0.7em; word-wrap:break-word;" data-ng-class="{true: 'v_highlight', false: ''}[from_vin == true && v_index == vin.n]" >
-            <p><strong>Confirmations:</strong> {{vin.confirmations}}</p>
-            <p><strong>scriptSig</strong></p>
-              <div data-ng-repeat="item in vin.scriptSig.asm | split:' '" class="">
-                <p class="col-md-11 ellipsis text-muted">{{item}}</p>
-                <p class="btn-copy" clip-copy="item"></p>
-              </div>
-          </div>
-        </div>
-        <div class="text-left">
-          <button type="button" class="btn btn-default btn-sm" data-ng-show="(from_vin) && tx.vin.length > 1" data-ng-disabled="fromVinCollapsed" data-ng-click="currentInExpanded=0; sizeInExpanded=tx.vin.length;fromVinCollapsed=1">
-            <span translate>Show input</span> #{{ v_index }}</button>
-          <button type="button" class="btn btn-default btn-sm" data-ng-show="(from_vin) && tx.vin.length > 1" data-ng-disabled="!fromVinCollapsed" data-ng-click="currentInExpanded=0; sizeInExpanded=tx.vin.length;fromVinCollapsed=0">
-            <span translate>Show all</span></button>
-        </div>
-        <div class="showmore_collapse text-left" data-ng-show="tx.vin.length > 5 && !fromVinCollapsed" data-ng-class="{ 'hidden': !itemsExpanded}">
-          <button type="button" class="btn btn-info btn-sm" ng-hide="sizeInExpanded != tx.vin.length" ng-click="currentInExpanded=0; sizeInExpanded=5"><i class="glyphicon glyphicon-chevron-up"></i> 
-            <span translate>Show less</span></button>
-          <button type="button" class="btn btn-info btn-sm" ng-hide="currentInExpanded >= tx.vin.length/sizeInExpanded - 1" ng-click="currentInExpanded=0; sizeInExpanded=tx.vin.length"><i class="glyphicon glyphicon-chevron-down"></i> 
-            <span translate>Show more</span></button>
-        </div>
+      <div data-ng-if="!tx.isCoinBase && tx.vin.length > 10 && showAllInputs" style="padding: 8px; text-align: center; border-top: 1px solid #f0f0f0;">
+        <button class="btn btn-sm btn-default" ng-click="showAllInputs = false; $parent.showAllInputs = false" style="font-size: 11px;">
+          <span class="glyphicon glyphicon-chevron-up"></span> Show Less
+        </button>
+      </div>
+      
+      <div data-ng-if="tx.vin.length == 0 && !tx.isCoinBase" style="padding: 15px; text-align: center; color: #6c757d; font-size: 12px;">
+        <span translate>No Inputs</span>
       </div>
     </div>
-  </div>
-  <div class="col-md-1">
-    <div class="hidden-xs hidden-sm text-center">
-      <span class="lead glyphicon glyphicon-chevron-right text-muted"></span>
-    </div>
-    <div class="hidden-md hidden-lg text-center">
-      <span class="lead glyphicon glyphicon-chevron-down text-muted"></span>
-    </div>
-  </div>
-  <div class="col-md-6">
-    <div class="row" data-ng-if="tx.vout.length == 0">
-      <div class="col-md-12 transaction-vin-vout">
-        <div class="ellipsis">
-          <span translate>No Outputs</span>
-        </div>
+
+    <!-- OUTPUTS SECTION -->
+    <div style="flex: 1; min-width: 400px; background: #fff; border: 1px solid #e7eaf3; border-radius: 4px;">
+      <div style="background: #f8f9fa; padding: 4px 8px; border-bottom: 2px solid #e7eaf3;">
+        <strong style="font-size: 13px;"><span translate>Outputs</span> ({{tx.vout.length}})</strong>
       </div>
-    </div>
-    <div class="row" data-ng-if="tx.vout.length != 0">
-      <!-- Simple view >>> -->
-      <div data-ng-if="!itemsExpanded" data-ng-init="currentOutNoExpanded=0; sizeOutNoExpanded=5">
-        <div data-ng-repeat="vout in tx.voutSimple| startFrom:currentOutNoExpanded*sizeOutNoExpanded | limitTo:sizeOutNoExpanded">
-          <div class="transaction-vin-vout panel panel-default">
-            <div class="panel-body">
-              <div class="pull-right btc-value" data-ng-class="{'text-success': $root.currentAddr == vout.addr}">
-                {{$root.currency.getConvertion(vout.value)}}
-                <span class="text-danger" data-ng-show="vout.isSpent" tooltip="Output is spent" tooltip-placement="left">(S)</span>
-                <span class="text-success" data-ng-show="!vout.isSpent"  tooltip="Output is unspent" tooltip-placement="left">(U)</span>
+      
+      <table class="table table-hover" style="margin-bottom: 0; font-size: 12px;" data-ng-if="tx.vout.length > 0">
+        <tbody>
+          <tr data-ng-repeat-start="vout in tx.vout" data-ng-show="$index < 10 || showAllOutputs" style="border-bottom: 1px solid #f0f0f0;">
+            <td style="padding: 3px 4px; vertical-align: middle; width: 30px; color: #6c757d; font-size: 11px;">{{vout.n}}</td>
+            <td style="padding: 3px 4px; vertical-align: top; min-width: 250px;">
+              <!-- PBaaS output -->
+              <div data-ng-if="vout.script_reserve_balance" style="display: flex; align-items: center;">
+                <span class="glyphicon glyphicon-transfer" style="margin-right: 6px; color: #17a2b8; font-size: 10px;"></span>
+                <span data-ng-show="vout.notAddr" style="font-family: monospace; font-size: 11px;">{{vout.scriptPubKey.addresses[0]}}</span>
+                <a href="address/{{vout.scriptPubKey.addresses[0]}}" data-ng-show="!vout.notAddr" style="font-family: monospace; font-size: 11px;" data-ng-style="(vout.scriptPubKey.addresses[0] == address.addrStr || vout.scriptPubKey.addresses[0] == address.identityinfo.identity.identityaddress) && {'font-weight': 'bold', 'color': '#fff', 'background-color': '#3165D4', 'padding': '2px 6px', 'border-radius': '3px'} || {}">{{vout.scriptPubKey.addresses[0]}}</a>
+                <span class="btn-copy" clip-copy="vout.scriptPubKey.addresses[0]" style="margin-left: 6px;"></span>
               </div>
-
-              <div class="ellipsis">
-                <span data-ng-show="vout.notAddr">{{vout.addr}}</span>
-                <span class="text-muted" title="Current Verus Address" data-ng-show="address == $root.currentAddr" data-ng-repeat="address in vout.addr.split(',')">{{vout.addr}}</span>
-                <a href="address/{{address}}"  data-ng-show="!vout.notAddr && address != $root.currentAddr" data-ng-repeat="address in vout.addr.split(',')">{{address}}</a>
+              <!-- Cross-chain Reserve Transfer to Ethereum -->
+              <div data-ng-if="vout.isCrossChainToEthereum && vout.actualDestination" style="display: flex; align-items: center; flex-wrap: wrap;">
+                <span class="glyphicon {{vout.protocolIcon}}" data-ng-style="{'color': vout.protocolColor}" style="margin-right: 6px; font-size: 10px;"></span>
+                <span data-ng-style="{'color': vout.protocolColor}" style="font-weight: 500; font-size: 11px; margin-right: 6px;">{{vout.protocolName}} → Ethereum:</span>
+                <span style="font-family: monospace; font-size: 11px; color: #333;">{{vout.actualDestination}}</span>
+                <span class="btn-copy" clip-copy="vout.actualDestination" style="margin-left: 6px;"></span>
+                <a href="https://etherscan.io/address/{{vout.actualDestination}}" target="_blank" style="margin-left: 5px; text-decoration: none;">
+                  <span style="display: inline-block; width: 14px; height: 14px; background-color: #627eea; border-radius: 50%; text-align: center; line-height: 14px; font-size: 10px; font-weight: bold; color: #fff; cursor: pointer; vertical-align: middle;" title="View on Etherscan">E</span>
+                </a>
               </div>
-            </div>
-            <!-- pbaas >>> -->
-            <div data-ng-if="vout.pbaas">
-             <div data-ng-repeat="(key, vout_currency) in vout.script_reserve_balance">
-              <div class="panel-body">
-               <div class="pull-right btc-value" data-ng-class="{'text-success': $root.currentAddr == vout.addr}">
-                {{vout_currency}} {{key}}
-                <span class="text-danger" data-ng-show="vout.isSpent" tooltip="Output is spent" tooltip-placement="left">(S)</span>
-                <span class="text-success" data-ng-show="!vout.isSpent"  tooltip="Output is unspent" tooltip-placement="left">(U)</span>
+              <!-- Protocol address with actual destination (non-Ethereum) -->
+              <div data-ng-if="vout.isProtocolAddress && vout.actualDestination && !vout.isCrossChainToEthereum" style="display: flex; align-items: center; flex-wrap: wrap;">
+                <span class="glyphicon {{vout.protocolIcon}}" data-ng-style="{'color': vout.protocolColor}" style="margin-right: 6px; font-size: 10px;"></span>
+                <span data-ng-style="{'color': vout.protocolColor}" style="font-weight: 500; font-size: 11px; margin-right: 6px;" title="{{vout.protocolDescription}}">{{vout.protocolName}}:</span>
+                <span style="font-family: monospace; font-size: 11px; color: #333;">{{vout.actualDestination}}</span>
+                <span class="btn-copy" clip-copy="vout.actualDestination" style="margin-left: 6px;"></span>
               </div>
-              <div class="ellipsis">
-                <span data-ng-show="vout.notAddr">{{vout.addr}}</span>
-                <span class="text-muted" title="Current Verus Address" data-ng-show="address == $root.currentAddr" data-ng-repeat="address in vout.addr.split(',')">{{vout.addr}}</span>
-                <a href="address/{{address}}"  data-ng-show="!vout.notAddr && address != $root.currentAddr" data-ng-repeat="address in vout.addr.split(',')">{{vout.address_pbaas[1]}}</a>
-               </div>
+              <!-- Protocol address without actual destination -->
+              <div data-ng-if="vout.isProtocolAddress && !vout.actualDestination && !vout.crosschainimport && !vout.feepool && !vout.acceptednotarization" style="display: flex; align-items: center; flex-wrap: wrap;">
+                <span class="glyphicon {{vout.protocolIcon}}" data-ng-style="{'color': vout.protocolColor}" style="margin-right: 6px; font-size: 10px;"></span>
+                <span data-ng-style="{'color': vout.protocolColor}" style="font-weight: 500; font-size: 11px;" title="{{vout.protocolDescription}}">{{vout.protocolName}}</span>
               </div>
-             </div>
-            </div>
-
-            <!-- identities >>> -->
-            <div data-ng-if="vout.identityprimary">
-            
-               <div class="panel-body">
-                <div class="pull-right btc-value" data-ng-class="{'text-success': $root.currentAddr == vout.addr}">
-                 Identity Created
-                 <span class="text-danger" data-ng-show="vout.isSpent" tooltip="Output is spent" tooltip-placement="left">(S)</span>
-                 <span class="text-success" data-ng-show="!vout.isSpent"  tooltip="Output is unspent" tooltip-placement="left">(U)</span>
+              <!-- Fee Pool with currency values -->
+              <div data-ng-if="vout.feepool" style="display: block;">
+                <div style="display: flex; align-items: center; margin-bottom: 4px;">
+                  <span class="glyphicon {{vout.protocolIcon}}" data-ng-style="{'color': vout.protocolColor}" style="margin-right: 6px; font-size: 10px;"></span>
+                  <span data-ng-style="{'color': vout.protocolColor}" style="font-weight: 500; font-size: 11px;">{{vout.protocolName}}</span>
                 </div>
-                <div class="ellipsis">
-                 <span data-ng-show="vout.notAddr">{{vout.identityprimary.primaryaddresses[0]}}</span>
-                 <span class="text-muted" title="Current Verus Address" data-ng-show="address == $root.currentAddr" data-ng-repeat="address in vout.addr.split(',')">{{vout.identityprimary.name}}</span>
-                 <a href="address/{{address}}"  data-ng-show="!vout.notAddr && address != $root.currentAddr" data-ng-repeat="address in vout.addr.split(',')">{{vout.identityprimary.name}}@</a>
+                <div data-ng-if="vout.feepool.currencyvaluesFriendly" style="margin-left: 20px; margin-top: 4px;">
+                  <div style="font-size: 10px; color: #6c757d; margin-bottom: 2px;">Currency Values:</div>
+                  <div data-ng-repeat="(currency, amount) in vout.feepool.currencyvaluesFriendly" style="padding: 2px 0; font-size: 11px;">
+                    <span style="font-weight: 500; color: #ffc107;">{{currency}}:</span>
+                    <span style="font-family: monospace; margin-left: 6px;">{{amount}}</span>
+                  </div>
                 </div>
-               </div>
-              
-             </div>
-
-            <!-- Launch currencies >>> -->
-            <div data-ng-if="vout.currencydefinition">
-            
-              <div class="panel-body">
-               <div class="pull-right btc-value" data-ng-class="{'text-success': $root.currentAddr == vout.addr}">
-                Currency Defined
-                <span class="text-danger" data-ng-show="vout.isSpent" tooltip="Output is spent" tooltip-placement="left">(S)</span>
-                <span class="text-success" data-ng-show="!vout.isSpent"  tooltip="Output is unspent" tooltip-placement="left">(U)</span>
-               </div>
-               <div class="ellipsis">
-                <span data-ng-show="vout.notAddr">{{vout.currencydefinition.name}}</span>
-                <span class="text-muted" title="Current Verus Address" data-ng-show="address == $root.currentAddr" data-ng-repeat="address in vout.addr.split(',')">{{vout.currencydefinition.name}}</span>
-                <a href="address/{{address}}"  data-ng-show="!vout.notAddr && address != $root.currentAddr" data-ng-repeat="address in vout.addr.split(',')">{{vout.currencydefinition.name}}</a>
-               </div>
               </div>
-             
-            </div>
-
-            <!-- crosschainimport / crosschainexport / finalizeNotarization / reservetransfer >>> -->
-            <div data-ng-if="vout.othercommitment">
-            
-              <div class="panel-body">
-               <div class="pull-right btc-value" data-ng-class="{'text-success': $root.currentAddr == vout.addr}">
-                {{vout.othercommitment}}
-                <span class="text-danger" data-ng-show="vout.isSpent" tooltip="Output is spent" tooltip-placement="left">(S)</span>
-                <span class="text-success" data-ng-show="!vout.isSpent"  tooltip="Output is unspent" tooltip-placement="left">(U)</span>
-               </div>
-               <div class="ellipsis">
-                <span data-ng-show="vout.notAddr">{{vout.othercommitment}}</span>
-                <span class="text-muted" title="Current Verus Address" data-ng-show="address == $root.currentAddr" data-ng-repeat="address in vout.addr.split(',')">{{vout.currencydefinition.name}}</span>
-                <a href="address/{{address}}"  data-ng-show="!vout.notAddr && address != $root.currentAddr" data-ng-repeat="address in vout.addr.split(',')">{{vout.currencydefinition.name}}</a>
-               </div>
+              <!-- Accepted Notarization with proposer and currency -->
+              <div data-ng-if="vout.acceptednotarization" style="display: block;">
+                <div style="display: flex; align-items: center; margin-bottom: 4px;">
+                  <span class="glyphicon {{vout.protocolIcon}}" data-ng-style="{'color': vout.protocolColor}" style="margin-right: 6px; font-size: 10px;"></span>
+                  <span data-ng-style="{'color': vout.protocolColor}" style="font-weight: 500; font-size: 11px;">{{vout.protocolName}}</span>
+                </div>
+                <div style="margin-left: 20px; margin-top: 4px;">
+                  <div data-ng-if="vout.acceptednotarization.currencyNameFriendly" style="padding: 2px 0; font-size: 11px;">
+                    <span style="font-weight: 500; color: #28a745;">Chain:</span>
+                    <span style="margin-left: 6px; color: #333;">{{vout.acceptednotarization.currencyNameFriendly}}</span>
+                  </div>
+                  <div data-ng-if="vout.acceptednotarization.proposer && vout.acceptednotarization.proposer.address" style="padding: 2px 0; font-size: 11px;">
+                    <span style="font-weight: 500; color: #28a745;">Proposer:</span>
+                    <a href="address/{{vout.acceptednotarization.proposer.address}}" style="font-family: monospace; margin-left: 6px; font-size: 11px;" data-ng-style="(vout.acceptednotarization.proposer.address == address.addrStr || vout.acceptednotarization.proposer.address == address.identityinfo.identity.identityaddress) && {'font-weight': 'bold', 'color': '#fff', 'background-color': '#3165D4', 'padding': '2px 6px', 'border-radius': '3px'} || {}">{{vout.acceptednotarization.proposer.address}}</a>
+                    <span class="btn-copy" clip-copy="vout.acceptednotarization.proposer.address" style="margin-left: 6px;"></span>
+                  </div>
+                  <div data-ng-if="vout.acceptednotarization.notarizationheight" style="padding: 2px 0; font-size: 11px;">
+                    <span style="font-weight: 500; color: #28a745;">Height:</span>
+                    <span style="font-family: monospace; margin-left: 6px; color: #6c757d;">{{vout.acceptednotarization.notarizationheight}}</span>
+                  </div>
+                </div>
               </div>
-             
-            </div>
-
-          </div>
-        </div>
-        <div class="showmore_collapse text-left" data-ng-show="tx.voutSimple.length > 5" data-ng-class="{ 'hidden': itemsExpanded}">
-          <button type="button" class="btn btn-info btn-sm" ng-hide="sizeOutNoExpanded != tx.voutSimple.length" ng-click="currentOutNoExpanded=0; sizeOutNoExpanded=5"><i class="glyphicon glyphicon-chevron-up"></i> 
-            <span translate>Show less</span></button>
-          <button type="button" class="btn btn-info btn-sm" ng-hide="currentOutNoExpanded >= tx.voutSimple.length/sizeOutNoExpanded - 1" ng-click="currentOutNoExpanded=0; sizeOutNoExpanded=tx.voutSimple.length"><i class="glyphicon glyphicon-chevron-down"></i> 
-            <span translate>Show more</span></button>
-        </div>
-      </div>
-
-      <!-- Full view >>> -->
-      <div data-ng-if="itemsExpanded" data-ng-init="currentOutExpanded=0; sizeOutExpanded=(from_vout) ? tx.vout.length : 5; fromVoutCollapsed=(from_vout)">
-        <div data-ng-repeat="vout in tx.vout| startFrom:currentOutExpanded*sizeOutExpanded | limitTo:sizeOutExpanded" data-ng-if="fromVoutCollapsed ? v_index == vout.n : 1">
-          <div class="panel panel-default transaction-vin-vout">
-            <div class="panel-body">
-              <div class="pull-right btc-value">
-                <span>{{$root.currency.getConvertion(vout.value)}}
-                  <span class="text-success" data-ng-show="!vout.spentTxId" tooltip="Output is unspent" tooltip-placement="left">(U)</span>
-                  <a class="glyphicon glyphicon-chevron-right" data-ng-show="vout.spentTxId" href="tx/{{vout.spentTxId}}/</{{vout.spentIndex}}" title="Spent at: {{vout.spentTxId}},{{vout.spentIndex}}"></a>
+              <!-- Cross-chain Import with valuein -->
+              <div data-ng-if="vout.crosschainimport" style="display: block;">
+                <div style="display: flex; align-items: center; margin-bottom: 4px;">
+                  <span class="glyphicon glyphicon-import" style="margin-right: 6px; color: #20c997; font-size: 10px;"></span>
+                  <span style="color: #20c997; font-weight: 500; font-size: 11px;">Cross-chain Import</span>
+                </div>
+                <div data-ng-if="vout.crosschainimport.valueinFriendly" style="margin-left: 20px; margin-top: 4px;">
+                  <div style="font-size: 10px; color: #6c757d; margin-bottom: 2px;">Value In:</div>
+                  <div data-ng-repeat="(currency, amount) in vout.crosschainimport.valueinFriendly" style="padding: 2px 0; font-size: 11px;">
+                    <span style="font-weight: 500; color: #17a2b8;">{{currency}}:</span>
+                    <span style="font-family: monospace; margin-left: 6px;">{{amount}}</span>
+                  </div>
+                </div>
+                <div data-ng-if="vout.crosschainimport.exporttxid" style="margin-left: 20px; margin-top: 4px; font-size: 10px;">
+                  <span style="color: #6c757d;">Export TX:</span>
+                  <a href="tx/{{vout.crosschainimport.exporttxid}}" style="font-family: monospace; margin-left: 4px; font-size: 10px;">{{vout.crosschainimport.exporttxid}}</a>
+                </div>
+              </div>
+              <!-- P2SH Output (OP_RETURN with P2SH) -->
+              <div data-ng-if="vout.isP2SH && vout.p2shAddress" style="display: flex; align-items: center;">
+                <span class="glyphicon glyphicon-link" style="margin-right: 6px; color: #9c27b0; font-size: 10px;"></span>
+                <span style="font-weight: 500; font-size: 11px; color: #9c27b0; margin-right: 6px;">P2SH Output:</span>
+                <a href="address/{{vout.p2shAddress}}" style="font-family: monospace; font-size: 11px; color: #9c27b0;">{{vout.p2shAddress}}</a>
+                <span class="btn-copy" clip-copy="vout.p2shAddress" style="margin-left: 6px;"></span>
+              </div>
+              <!-- Standard output -->
+              <div data-ng-if="!vout.script_reserve_balance && !vout.identityprimary && !vout.currencydefinition && !vout.othercommitment && !vout.isProtocolAddress && !vout.isP2SH" style="display: flex; align-items: center; flex-wrap: wrap;">
+                <span data-ng-show="vout.notAddr" style="font-family: monospace; font-size: 11px;">{{vout.scriptPubKey.addresses[0]}}</span>
+                <span data-ng-show="!vout.notAddr" data-ng-repeat="addr in vout.scriptPubKey.addresses" style="margin-right: 4px;">
+                  <a href="address/{{addr}}" style="font-family: monospace; font-size: 11px;" data-ng-style="(addr == address.addrStr || addr == address.identityinfo.identity.identityaddress) && {'font-weight': 'bold', 'color': '#fff', 'background-color': '#3165D4', 'padding': '2px 6px', 'border-radius': '3px'} || {}">{{addr}}</a>
                 </span>
+                <span class="btn-copy" clip-copy="vout.scriptPubKey.addresses[0]" style="margin-left: 6px;"></span>
+           
               </div>
-              <div class="ellipsis">
-                <a href="address/{{address}}" data-ng-repeat="address in vout.scriptPubKey.addresses">{{address}}</a>
+              <!-- Identity -->
+              <div data-ng-if="vout.identityprimary" style="display: block;">
+                <span class="glyphicon glyphicon-user" style="margin-right: 6px; color: #007bff; font-size: 10px;"></span>
+                <span translate>Identity:</span>
+                <a href="address/{{vout.identityprimary.identityaddress}}" style="margin-left: 4px; font-weight: 500; font-size: 11px;">{{vout.identityprimary.name}}@</a>
+                <a href="api/addr/{{vout.identityprimary.identityaddress}}" target="_blank" style="margin-left: 5px; text-decoration: none;">
+                  <span style="display: inline-block; width: 14px; height: 14px; background-color: #2b6dd7; border-radius: 50%; text-align: center; line-height: 14px; font-size: 10px; font-weight: bold; color: #fff; cursor: pointer; vertical-align: middle;" title="View API JSON">i</span>
+                </a>
               </div>
-             </div>
-          <!-- pbaas >>> -->
-              <div data-ng-repeat="(key, vout_currency) in vout.script_reserve_balance">
-                <div class="panel-body">
-                  <div class="pull-right btc-value">
-                    <span>{{vout_currency}} {{key}}
-                      <span class="text-success" data-ng-show="!vout.spentTxId" tooltip="Output is unspent" tooltip-placement="left">(U)</span>
-                      <a class="glyphicon glyphicon-chevron-right" data-ng-show="vout.spentTxId" href="tx/{{vout.spentTxId}}/</{{vout.spentIndex}}" title="Spent at: {{vout.spentTxId}},{{vout.spentIndex}}"></a>
-                    </span>
-                  </div>
-                  <div class="ellipsis">
-                    <a href="address/{{address}}" data-ng-repeat="address in vout.scriptPubKey.addresses">{{address}}</a>
-                  </div>
-                </div>
-          
+              <!-- Currency Definition -->
+              <div data-ng-if="vout.currencydefinition" style="display: flex; align-items: center;">
+                <span class="glyphicon glyphicon-usd" style="margin-right: 6px; color: #17a2b8; font-size: 10px;"></span>
+                <span translate>Currency:</span>
+                <!-- <a href="getcurrency?currency={{vout.currencydefinition.name}}" style="margin-left: 4px; font-weight: 500; font-size: 11px;">{{vout.currencydefinition.name}}</a> -->
+                <span style="margin-left: 4px; font-weight: 500; font-size: 11px;">{{vout.currencydefinition.name}}</span>
+                <!-- <a href="api/getcurrency/{{vout.currencydefinition.name}}" target="_blank" style="margin-left: 5px; text-decoration: none;">
+                  <span style="display: inline-block; width: 14px; height: 14px; background-color: #17a2b8; border-radius: 50%; text-align: center; line-height: 14px; font-size: 10px; font-weight: bold; color: #fff; cursor: pointer; vertical-align: middle;" title="View Currency Details">i</span>
+                </a> -->
               </div>
-            </div>
-          <div style="padding-left: 0.7em; padding-bottom: 2em; word-wrap:break-word" data-ng-class="{true: 'v_highlight', false: ''}[from_vout == true && v_index == vout.n]">
-              <p class="small">
-                <strong translate>Type</strong>
-                <span class="text-muted">{{vout.scriptPubKey.type}}</span>
-              </p>
-              <div class="small">
-                <p><strong>scriptPubKey</strong></p>
-                <span class="col-md-11 text-muted ellipsis">{{vout.scriptPubKey.asm}}</span>
-                <span class="btn-copy col-md-1" clip-copy="vout.scriptPubKey.asm"></span>
+              <!-- Other Commitment -->
+              <div data-ng-if="vout.othercommitment" style="display: flex; align-items: center;">
+                <span class="glyphicon glyphicon-random" style="margin-right: 6px; color: #6c757d; font-size: 10px;"></span>
+                <span style="font-weight: 500; font-size: 11px;">{{vout.othercommitment}}</span>
               </div>
-          </div>
-        </div>
-        <div class="text-right">
-          <button type="button" class="btn btn-default btn-sm" data-ng-show="(from_vout) && tx.vout.length > 1" data-ng-disabled="fromVoutCollapsed" data-ng-click="currentOutExpanded=0; sizeOutExpanded=tx.vout.length;fromVoutCollapsed=1">Show output #{{ v_index }}</button>
-          <button type="button" class="btn btn-default btn-sm" data-ng-show="(from_vout) && tx.vout.length > 1" data-ng-disabled="!fromVoutCollapsed" data-ng-click="currentOutExpanded=0; sizeOutExpanded=tx.vout.length;fromVoutCollapsed=0">Show all</button>
-        </div>
-        <div class="showmore_collapse text-left" data-ng-show="tx.vout.length > 5 && !fromVoutCollapsed" data-ng-class="{ 'hidden': !itemsExpanded}">
-          <button type="button" class="btn btn-info btn-sm" ng-hide="sizeOutExpanded != tx.vout.length" ng-click="currentOutExpanded=0; sizeOutExpanded=5"><i class="glyphicon glyphicon-chevron-up"></i>Show less</button>
-          <button type="button" class="btn btn-info btn-sm" ng-hide="currentOutExpanded >= tx.vout.length/sizeOutExpanded - 1" ng-click="currentOutExpanded=0; sizeOutExpanded=tx.vout.length"><i class="glyphicon glyphicon-chevron-down"></i> Show more</button>
-        </div>
+            </td>
+            <td style="padding: 3px 4px; vertical-align: middle; text-align: right; font-family: monospace; font-weight: 500; font-size: 11px; white-space: nowrap;">
+              {{$root.currency.getConvertion(vout.value)}}
+            </td>
+            <td style="padding: 3px 4px; vertical-align: middle; text-align: center; width: 60px; font-size: 10px;">
+              <span data-ng-show="vout.spentTxId" style="color: #dc3545;" title="Spent">
+                <a href="tx/{{vout.spentTxId}}" style="color: #dc3545;">
+                  <span class="glyphicon glyphicon-remove-circle" style="font-size: 11px;"></span> <span translate>S</span>
+                </a>
+              </span>
+              <span data-ng-show="!vout.spentTxId" style="color: #28a745;" title="Unspent">
+                <span class="glyphicon glyphicon-ok-circle" style="font-size: 11px;"></span> <span translate>U</span>
+              </span>
+            </td>
+          </tr>
+          <!-- PBaaS reserve currencies - only show if this vout has script_reserve_balance -->
+          <tr data-ng-if="vout.script_reserve_balance" data-ng-repeat="(key, vout_currency) in vout.script_reserve_balance" data-ng-show="$parent.$index < 10 || showAllOutputs" style="border-bottom: 1px solid #f0f0f0;">
+            <td style="padding: 3px 4px; vertical-align: middle; width: 30px; color: #6c757d; font-size: 11px;"></td>
+            <td style="padding: 3px 4px; vertical-align: middle; padding-left: 30px;">
+              <div style="display: flex; align-items: center;">
+                <span style="color: #6c757d; font-size: 10px; margin-right: 6px;">└</span>
+                <span style="color: #6c757d; font-size: 10px;">Currency Output</span>
+              </div>
+            </td>
+            <td style="padding: 3px 4px; vertical-align: middle; text-align: right; font-family: monospace; font-weight: 500; font-size: 11px; white-space: nowrap;">
+              <span style="font-weight: 500; font-size: 11px;">{{vout_currency}}</span> <span style="color: #6c757d; font-size: 10px;">{{key}}</span>
+            </td>
+            <td style="padding: 3px 4px; vertical-align: middle; text-align: center; width: 60px; font-size: 10px;"></td>
+          </tr>
+          <tr data-ng-repeat-end data-ng-show="$index < 10 || showAllOutputs"></tr>
+        </tbody>
+      </table>
+      <div data-ng-if="tx.vout.length > 10 && !showAllOutputs" style="padding: 8px; text-align: center; border-top: 1px solid #f0f0f0;">
+        <button class="btn btn-sm btn-default" ng-click="showAllOutputs = true; $parent.showAllOutputs = true" style="font-size: 11px;">
+          <span class="glyphicon glyphicon-chevron-down"></span> Show All {{tx.vout.length}} Outputs
+        </button>
+      </div>
+      <div data-ng-if="tx.vout.length > 10 && showAllOutputs" style="padding: 8px; text-align: center; border-top: 1px solid #f0f0f0;">
+        <button class="btn btn-sm btn-default" ng-click="showAllOutputs = false; $parent.showAllOutputs = false" style="font-size: 11px;">
+          <span class="glyphicon glyphicon-chevron-up"></span> Show Less
+        </button>
+      </div>
+      
+      <div data-ng-if="tx.vout.length == 0" style="padding: 15px; text-align: center; color: #6c757d; font-size: 12px;">
+        <span translate>No Outputs</span>
       </div>
     </div>
   </div>
-</div>
 
-<div class="well well-sm bgwhite ellipsis" data-ng-if="itemsExpanded && !block.hash && tx.blockhash">
-  <strong translate>Included in Block</strong> <a class="text-muted" href="block/{{tx.blockhash}}">{{tx.blockhash}}</a>
-  <span class="btn-copy" clip-copy="tx.blockhash"></span>
-</div>
+  <!-- SHIELDED TRANSACTIONS (if any) -->
+  <div data-ng-if="(tx.spendDescs && tx.spendDescs.length > 0) || (tx.outputDescs && tx.outputDescs.length > 0) || (tx.vjoinsplit && tx.vjoinsplit.length > 0)" style="background: #fff; border: 1px solid #e7eaf3; border-radius: 4px; padding: 4px; margin-top: 2px;">
+    <!-- Sapling Shielded -->
+    <div data-ng-if="(tx.spendDescs && tx.spendDescs.length > 0) || (tx.outputDescs && tx.outputDescs.length > 0)">
+      <h5 style="margin: 0 0 10px 0; font-size: 13px; font-weight: 600;">
+        <span class="glyphicon glyphicon-lock" style="margin-right: 6px;"></span>
+        <span translate>Shielded Transaction (Sapling)</span>
+      </h5>
+      <div style="background: #f8f9fa; border-radius: 4px; padding: 10px; display: flex; justify-content: space-around; text-align: center;">
+        <div>
+          <div style="color: #6c757d; font-size: 11px; margin-bottom: 4px;" translate>Shielded Spends</div>
+          <div style="font-size: 16px; font-weight: 600;">{{tx.spendDescs.length}}</div>
+        </div>
+        <div>
+          <div style="color: #6c757d; font-size: 11px; margin-bottom: 4px;" translate>Shielded Outputs</div>
+          <div style="font-size: 16px; font-weight: 600;">{{tx.outputDescs.length}}</div>
+        </div>
+        <div data-ng-if="tx.valueBalance != null && tx.valueBalance != 0">
+          <div style="color: #6c757d; font-size: 11px; margin-bottom: 4px;" translate>Shielded Amount</div>
+          <div style="font-size: 16px; font-weight: 600;" data-ng-class="{'text-success': tx.valueBalance > 0, 'text-danger': tx.valueBalance < 0}">
+            <span data-ng-show="tx.valueBalance > 0">{{$root.currency.getConvertion(tx.valueBalance)}} ↑</span>
+            <span data-ng-show="tx.valueBalance < 0">{{$root.currency.getConvertion(-tx.valueBalance)}} ↓</span>
+          </div>
+        </div>
+      </div>
+    </div>
 
-<div class="line-top row" data-ng-hide="!tx">
-  <div class="col-xs-6 col-sm-4 col-md-4">
-    <span data-ng-show="!tx.isCoinBase &&  !isNaN(parseFloat(tx.fees))"
-      class="txvalues txvalues-default"><span translate>Fee</span>: {{$root.currency.getConvertion(tx.fees)}} </span>
+    <!-- JoinSplit -->
+    <div data-ng-if="tx.vjoinsplit && tx.vjoinsplit.length > 0" style="margin-top: 10px;">
+      <h5 style="margin: 0 0 8px 0; font-size: 13px; font-weight: 600;">
+        <span class="glyphicon glyphicon-lock" style="margin-right: 6px;"></span>
+        <span translate>JoinSplit Transactions</span>
+      </h5>
+      <table class="table" style="margin-bottom: 0; font-size: 12px;">
+        <thead style="background: #f8f9fa;">
+          <tr>
+            <th style="padding: 6px 8px; border-bottom: 2px solid #e7eaf3; width: 40px;">#</th>
+            <th style="padding: 6px 8px; border-bottom: 2px solid #e7eaf3; text-align: right;"><span translate>Public Input</span></th>
+            <th style="padding: 6px 8px; border-bottom: 2px solid #e7eaf3; text-align: right;"><span translate>Public Output</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr data-ng-repeat="vjs in tx.vjoinsplit" style="border-bottom: 1px solid #f0f0f0;">
+            <td style="padding: 6px 8px; vertical-align: middle; color: #6c757d;">{{vjs.n}}</td>
+            <td style="padding: 6px 8px; vertical-align: middle; text-align: right; font-family: monospace;">{{$root.currency.getConvertion(vjs.vpub_old)}}</td>
+            <td style="padding: 6px 8px; vertical-align: middle; text-align: right; font-family: monospace;">{{$root.currency.getConvertion(vjs.vpub_new)}}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
-  <div class="col-xs-6 col-sm-8 col-md-8 text-right">
-    <span data-ng-show="tx.confirmations" class="txvalues
-      txvalues-success">{{tx.confirmations}} <span translate>Confirmations</span></span>
-    <span data-ng-show="!tx.confirmations" class="txvalues txvalues-danger" translate>Unconfirmed Transaction!</span>
-    <span class="txvalues txvalues-primary">{{$root.currency.getConvertion(tx.valueOut)}}</span>
-  </div>
+
 </div>

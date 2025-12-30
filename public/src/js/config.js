@@ -50,6 +50,14 @@ angular.module('insight').config(function($routeProvider) {
     when('/help', {
       templateUrl: 'views/help.html',
       title: 'Status'
+    }).
+    // when('/getcurrency', {
+    //   templateUrl: 'views/getcurrency.html',
+    //   title: 'Currency Explorer',
+    //   controller: 'GetCurrencyController'
+    // })
+    when('/getcurrency', {
+      redirectTo: '/'
     })
     .otherwise({
       templateUrl: 'views/404.html',
