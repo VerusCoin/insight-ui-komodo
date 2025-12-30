@@ -3,5 +3,5 @@
     <input id="search" type="text" class="form-control" data-ng-model="q" data-ng-class="{'loading': loading}" placeholder="{{'Search for block, transaction or address'|translate}}" data-ng-submit="search()" focus="true">
     </div>
   <div class="no_matching text-danger" data-ng-show="badQuery" translate>No matching records found!</div>
-  <div class="no_matching text-danger" data-ng-show="blockedAddress">This address is blocked due to performance issues</div>
+  <div class="no_matching text-danger" data-ng-show="blockedAddress">This address is internal to the Verus protocol and does not belong to any wallet or user. It is prevented from search here as a performance consideration.</div>
 </form>
